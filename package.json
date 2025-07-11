@@ -1,0 +1,8 @@
+{
+  "name": "lumberjack-rise",
+  "private": "true",
+  "workspaces": [
+    "apps/**/*",
+    "packages/**/*"
+  ]
+}
