@@ -1,8 +1,14 @@
 {
   "name": "lumberjack-rise",
   "private": "true",
+  "scripts": {
+    "dev": "mprocs"
+  },
   "workspaces": [
     "apps/**/*",
     "packages/**/*"
-  ]
+  ],
+  "devDependencies": {
+    "mprocs": "^0.7.3"
+  }
 }

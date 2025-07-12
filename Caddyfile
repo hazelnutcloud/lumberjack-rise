@@ -1,0 +1,7 @@
+auth.lumberjack.localhost {
+    reverse_proxy localhost:8787
+}
+
+lumberjack.localhost {
+    reverse_proxy https://localhost:5173
+}

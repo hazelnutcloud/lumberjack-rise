@@ -9,6 +9,12 @@
 		"test": "vitest",
 		"cf-typegen": "wrangler types"
 	},
+	"exports": {
+		"./subjects": {
+			"import": "./src/subjects.ts",
+			"types": "./src/subjects.ts"
+		}
+	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.8.19",
 		"drizzle-kit": "^0.31.4",
@@ -19,7 +25,9 @@
 	"dependencies": {
 		"@openauthjs/openauth": "^0.4.3",
 		"arktype": "^2.1.20",
+		"discord.js": "^14.21.0",
 		"drizzle-orm": "^0.44.2",
+		"hono": "^4.8.4",
 		"viem": "^2.31.7"
 	}
 }

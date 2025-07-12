@@ -33,6 +33,11 @@
 		"typescript": "^5.0.0",
 		"typescript-eslint": "^8.20.0",
 		"vite": "^7.0.4",
-		"vite-plugin-devtools-json": "^0.2.0"
+		"vite-plugin-devtools-json": "^0.2.0",
+		"vite-plugin-mkcert": "^1.17.8"
+	},
+	"dependencies": {
+		"@openauthjs/openauth": "^0.4.3",
+		"auth-server": "workspace:*"
 	}
 }

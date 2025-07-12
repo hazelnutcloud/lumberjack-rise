@@ -11,12 +11,12 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
-import { createIssuer } from './issuer';
+import { createApp } from './app';
 
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
-		const issuer = createIssuer(env);
+		const app = createApp(env);
 
-		return await issuer.fetch(request, env, ctx);
+		return await app.fetch(request, env, ctx);
 	},
 } satisfies ExportedHandler<Env>;
