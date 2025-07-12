@@ -3,7 +3,3 @@ procs:
     cmd: ["bun", "--filter", "auth-server", "dev"]
   web-frontend:
     cmd: ["bun", "--filter", "web-frontend", "dev"]
-    env:
-      NODE_OPTIONS: --use-system-ca
-  proxy:
-    cmd: ["caddy", "run"]
