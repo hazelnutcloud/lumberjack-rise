@@ -1,16 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {VRFConsumerBaseV2Plus} from "chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
-import {VRFV2PlusClient} from "chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
+// Fast VRF interfaces
+interface IVRFConsumer {
+    function rawFulfillRandomNumbers(uint256 requestId, uint256[] memory randomNumbers) external;
+}
 
-contract Lumberjack is VRFConsumerBaseV2Plus {
+interface IVRFCoordinator {
+    function requestRandomNumbers(uint32 numNumbers, uint256 clientSeed) external returns (uint256 requestId);
+
+    function getClientSeed(uint256 requestId) external view returns (uint256);
+
+    function fulfilled(uint256 requestId) external view returns (bool);
+}
+
+contract Lumberjack is IVRFConsumer {
     // Custom errors
     error NoActiveGame();
     error GameAlreadyActive();
     error TimerExpired();
     error InvalidRequestId();
-    error Unauthorized();
+    error OnlyVRFCoordinator();
+    error NoRandomNumbers();
 
     // Game constants
     uint256 private constant PLAYER_HEIGHT = 3;
@@ -19,12 +30,8 @@ contract Lumberjack is VRFConsumerBaseV2Plus {
     uint256 private constant TIME_PER_CHOP = 1 seconds;
     uint256 private constant LEADERBOARD_SIZE = 10;
 
-    // VRF configuration
-    uint256 private immutable i_subscriptionId;
-    bytes32 private immutable i_keyHash;
-    uint32 private immutable i_callbackGasLimit;
-    uint16 private constant REQUEST_CONFIRMATIONS = 3;
-    uint32 private constant NUM_WORDS = 1;
+    // VRF Coordinator on RISE Chain
+    IVRFCoordinator public immutable coordinator;
 
     // Enums
     enum Move {
@@ -65,12 +72,8 @@ contract Lumberjack is VRFConsumerBaseV2Plus {
     event MoveMade(address indexed player, Move move, uint256 score, uint8 nextBranch, uint256 timerEnd);
     event GameEnded(address indexed player, uint256 finalScore, bool victory);
 
-    constructor(address vrfCoordinator, uint256 subscriptionId, bytes32 keyHash, uint32 callbackGasLimit)
-        VRFConsumerBaseV2Plus(vrfCoordinator)
-    {
-        i_subscriptionId = subscriptionId;
-        i_keyHash = keyHash;
-        i_callbackGasLimit = callbackGasLimit;
+    constructor(address _vrfCoordinator) {
+        coordinator = IVRFCoordinator(_vrfCoordinator);
 
         // Initialize empty leaderboard
         leaderboardPlayers = new address[](LEADERBOARD_SIZE);
@@ -82,17 +85,10 @@ contract Lumberjack is VRFConsumerBaseV2Plus {
         GameState storage game = games[msg.sender];
         if (game.isActive) revert GameAlreadyActive();
 
-        // Request random seed from Chainlink VRF
-        uint256 requestId = s_vrfCoordinator.requestRandomWords(
-            VRFV2PlusClient.RandomWordsRequest({
-                keyHash: i_keyHash,
-                subId: i_subscriptionId,
-                requestConfirmations: REQUEST_CONFIRMATIONS,
-                callbackGasLimit: i_callbackGasLimit,
-                numWords: NUM_WORDS,
-                extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false}))
-            })
-        );
+        // Request random seed from Fast VRF
+        // Use blockhash as client seed for additional entropy
+        uint256 clientSeed = uint256(blockhash(block.number - 1));
+        uint256 requestId = coordinator.requestRandomNumbers(1, clientSeed);
 
         game.awaitingVRF = true;
         requestIdToPlayer[requestId] = msg.sender;
@@ -100,12 +96,15 @@ contract Lumberjack is VRFConsumerBaseV2Plus {
         emit GameStartRequested(msg.sender, requestId);
     }
 
-    // VRF callback
-    function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
+    // VRF callback - called by VRF Coordinator
+    function rawFulfillRandomNumbers(uint256 requestId, uint256[] memory randomNumbers) external override {
+        if (msg.sender != address(coordinator)) revert OnlyVRFCoordinator();
+        if (randomNumbers.length == 0) revert NoRandomNumbers();
+
         address player = requestIdToPlayer[requestId];
         if (player == address(0)) revert InvalidRequestId();
 
-        _initializeGame(player, randomWords[0]);
+        _initializeGame(player, randomNumbers[0]);
         delete requestIdToPlayer[requestId];
     }
 
@@ -152,8 +151,10 @@ contract Lumberjack is VRFConsumerBaseV2Plus {
         game.playerPosition = uint256(move);
         game.currentHeight++;
 
-        // Update timer with dynamic difficulty
-        game.timerEnd = block.timestamp + TIME_PER_CHOP;
+        // Update timer with fixed time for now
+        if ((game.timerEnd + TIME_PER_CHOP - block.timestamp) <= INITIAL_TIMER) {
+            game.timerEnd += TIME_PER_CHOP;
+        }
 
         // Calculate next branch
         uint256 nextBranchHeight = game.currentHeight + 1;
@@ -245,13 +246,7 @@ contract Lumberjack is VRFConsumerBaseV2Plus {
         return BranchSide.NONE; // Fallback
     }
 
-    // Dynamic difficulty - decrease time as score increases
-    function _getTimePerMove(uint256 score) private pure returns (uint256) {
-        if (score < 50) return 2 seconds;
-        if (score < 100) return 1500; // 1.5 seconds
-        if (score < 200) return 1 seconds;
-        return 500; // 0.5 seconds
-    }
+
 
     // View functions
     function getGameState(address player)

@@ -7,23 +7,23 @@ Lumberjack is an on-chain reflex game where players chop down an infinite tree w
 - Players start on the left side of the tree
 - Each move (left/right) chops the tree and moves the player
 - Branches appear on either side - hitting one ends the game
-- Timer counts down - make moves to add time
-- Difficulty increases with score (less time per move)
+- Timer counts down - make moves to add time (capped at 5 seconds max)
+- Fixed time bonus per move (1 second)
 - Infinite gameplay with deterministic branch generation
 
 ## Architecture
 
 ### Core Contract: `Lumberjack.sol`
 
-- **Chainlink VRF Integration**: Generates unique random seed for each game
+- **Fast VRF Integration**: Uses RISE Chain's Fast VRF for unique random seeds
 - **On-Demand Branch Generation**: Calculates branches as needed (gas efficient)
-- **Dynamic Difficulty**: Time per move decreases as score increases
+- **Timer Cap System**: Timer capped at 5 seconds with 1 second bonus per move
 - **Leaderboard**: Tracks top 10 scores globally
 
 ### Key Features
 
 1. **Infinite Tree**: No height limit, branches generated deterministically
-2. **Fair Randomness**: Chainlink VRF ensures unpredictable but verifiable games
+2. **Fair Randomness**: Fast VRF ensures unpredictable but verifiable games
 3. **Gas Optimized**: Only stores current game state, not entire tree
 4. **Player Safety**: Minimum 3-block gap between branches on same side
 
@@ -68,33 +68,30 @@ forge snapshot
 
 ### Deployment
 
-1. Set up a Chainlink VRF subscription on your target network
-2. Fund the subscription with LINK tokens
-3. Deploy the contract:
+Deploy the contract to RISE Chain:
 
 ```bash
-forge script script/Deploy.s.sol --rpc-url <RPC_URL> --private-key <PRIVATE_KEY> --broadcast
+forge script script/Deploy.s.sol --rpc-url https://testnet.risechain.xyz --private-key <PRIVATE_KEY> --broadcast
 ```
 
-4. Add the deployed contract as a consumer to your VRF subscription
+The contract will automatically use the Fast VRF Coordinator at `0x9d57aB4517ba97349551C876a01a7580B1338909`
 
 ## Contract Addresses
 
-| Network          | Address | VRF Subscription |
-| ---------------- | ------- | ---------------- |
-| Sepolia          | TBD     | TBD              |
-| Base Sepolia     | TBD     | TBD              |
-| Arbitrum Sepolia | TBD     | TBD              |
+| Network    | Address | VRF Coordinator                            |
+| ---------- | ------- | ------------------------------------------ |
+| RISE Chain | TBD     | 0x9d57aB4517ba97349551C876a01a7580B1338909 |
 
 ## Gas Costs
 
-- Start Game: ~150k gas (includes VRF request)
-- Make Move: ~50k gas
+- Start Game: ~124k gas (includes VRF request)
+- Make Move: ~66k gas
 - End Game: ~30k gas
 
 ## Security Considerations
 
-- VRF callback restricted to Chainlink Coordinator
+- VRF callback restricted to Fast VRF Coordinator
 - No reentrancy vulnerabilities
 - Deterministic branch generation prevents manipulation
 - Timer prevents indefinite games
+- ECDSA signature verification ensures random number integrity

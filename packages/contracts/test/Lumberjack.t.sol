@@ -3,23 +3,14 @@ pragma solidity ^0.8.19;
 
 import {Test, console2} from "forge-std/Test.sol";
 import {Lumberjack} from "../src/Lumberjack.sol";
-import {VRFCoordinatorV2_5Mock} from "chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
+import {VRFCoordinatorMock} from "./mocks/VRFCoordinatorMock.sol";
 
 contract LumberjackTest is Test {
     Lumberjack public lumberjack;
-    VRFCoordinatorV2_5Mock public vrfCoordinator;
+    VRFCoordinatorMock public vrfCoordinator;
 
     address public player = address(0x1);
     address public player2 = address(0x2);
-
-    uint256 public subscriptionId;
-    bytes32 public keyHash = keccak256("test");
-    uint32 public callbackGasLimit = 500000;
-
-    // VRF Mock parameters
-    uint96 public baseFee = 0.1 ether;
-    uint96 public gasPriceLink = 1e9;
-    int256 public weiPerUnitLink = 1e15;
 
     // Track request IDs
     uint256 public nextRequestId = 1;
@@ -30,23 +21,11 @@ contract LumberjackTest is Test {
     event GameEnded(address indexed player, uint256 finalScore, bool victory);
 
     function setUp() public {
-        // Deploy VRF Coordinator Mock with lower fees for testing
-        baseFee = 0;
-        gasPriceLink = 0;
+        // Deploy VRF Coordinator Mock
+        vrfCoordinator = new VRFCoordinatorMock();
 
-        vrfCoordinator = new VRFCoordinatorV2_5Mock(baseFee, gasPriceLink, weiPerUnitLink);
-
-        // Create subscription
-        subscriptionId = vrfCoordinator.createSubscription();
-
-        // Fund subscription with native tokens (ETH) since we're using native payment
-        vrfCoordinator.fundSubscriptionWithNative{value: 10 ether}(subscriptionId);
-
-        // Deploy Lumberjack
-        lumberjack = new Lumberjack(address(vrfCoordinator), subscriptionId, keyHash, callbackGasLimit);
-
-        // Add Lumberjack as consumer
-        vrfCoordinator.addConsumer(subscriptionId, address(lumberjack));
+        // Deploy Lumberjack with mock coordinator
+        lumberjack = new Lumberjack(address(vrfCoordinator));
 
         // Fund test accounts
         vm.deal(player, 10 ether);
@@ -72,7 +51,7 @@ contract LumberjackTest is Test {
         uint256 requestId = 1;
         uint256[] memory randomWords = new uint256[](1);
         randomWords[0] = 12345;
-        vrfCoordinator.fulfillRandomWords(requestId, address(lumberjack));
+        vrfCoordinator.fulfillRandomNumbers(requestId, randomWords);
 
         // Try to start another game
         vm.prank(player);
@@ -91,11 +70,11 @@ contract LumberjackTest is Test {
 
         vm.expectEmit(true, false, false, false); // Don't check data
         emit GameStarted(player, 0, 0); // We don't know exact values
-        vrfCoordinator.fulfillRandomWords(requestId, address(lumberjack));
+        vrfCoordinator.fulfillRandomNumbers(requestId, randomWords);
 
         // Check game state
         (
-            ,
+            uint256 gameId,
             uint256 randomSeed,
             uint256 currentHeight,
             uint256 playerPosition,
@@ -330,7 +309,7 @@ contract LumberjackTest is Test {
         // Fulfill VRF
         uint256[] memory randomWords = new uint256[](1);
         randomWords[0] = seed;
-        vrfCoordinator.fulfillRandomWords(requestId, address(lumberjack));
+        vrfCoordinator.fulfillRandomNumbers(requestId, randomWords);
     }
 }
 
