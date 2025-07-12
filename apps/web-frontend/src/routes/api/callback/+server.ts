@@ -1,4 +1,4 @@
-import { authClient } from '$lib/auth';
+import { getAuthClient } from '$lib/auth';
 import { error, redirect } from '@sveltejs/kit';
 
 export async function GET({ url, cookies }) {
@@ -7,6 +7,8 @@ export async function GET({ url, cookies }) {
 	if (!code) {
 		error(400);
 	}
+
+	const authClient = getAuthClient();
 
 	const exchanged = await authClient.exchange(code, `${url.origin}/api/callback`);
 

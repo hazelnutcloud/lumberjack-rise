@@ -10,5 +10,9 @@
   ],
   "devDependencies": {
     "mprocs": "^0.7.3"
-  }
+  },
+  "trustedDependencies": [
+    "@tailwindcss/oxide",
+    "web-frontend"
+  ]
 }

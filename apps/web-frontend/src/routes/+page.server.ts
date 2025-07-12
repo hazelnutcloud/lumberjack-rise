@@ -1,4 +1,4 @@
-import { authClient } from '$lib/auth';
+import { getAuthClient } from '$lib/auth';
 import { redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 
@@ -7,6 +7,7 @@ export const actions = {
 		if (event.locals.user) {
 			return event.locals.user;
 		}
+		const authClient = getAuthClient();
 
 		const { url } = await authClient.authorize(`${event.url.origin}/api/callback`, 'code');
 

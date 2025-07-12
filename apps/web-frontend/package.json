@@ -41,6 +41,7 @@
 		"@threlte/extras": "^9.4.2",
 		"@types/three": "^0.178.1",
 		"auth-server": "workspace:*",
+		"emittery": "^1.2.0",
 		"three": "^0.178.0"
 	}
 }

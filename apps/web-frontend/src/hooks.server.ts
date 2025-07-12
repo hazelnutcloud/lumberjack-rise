@@ -1,9 +1,10 @@
-import { authClient } from '$lib/auth';
+import { getAuthClient } from '$lib/auth';
 import { subjects } from 'auth-server/subjects';
 
 export async function handle({ event, resolve }) {
 	const accessToken = event.cookies.get('access_token');
 	const refreshToken = event.cookies.get('refresh_token');
+	const authClient = getAuthClient();
 
 	if (!accessToken) {
 		event.locals.user = null;
