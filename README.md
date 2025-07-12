@@ -42,7 +42,6 @@ This monorepo contains three main components:
 
 - [Bun](https://bun.sh/) (package manager)
 - [Foundry](https://book.getfoundry.sh/getting-started/installation) (for smart contract development)
-- [Caddy](https://caddyserver.com/) (for local development proxy)
 - Node.js 18+
 
 ### Installation
@@ -71,9 +70,8 @@ bun dev
 
 This starts:
 
-- Auth server at `https://auth.lumberjack.localhost`
-- Web frontend at `https://lumberjack.localhost`
-- Caddy proxy for local HTTPS
+- Auth server at `http://localhost:8787`
+- Web frontend at `http://localhost:5173`
 
 #### Individual Services
 
@@ -138,7 +136,7 @@ forge script script/Deploy.s.sol --rpc-url https://risechain.xyz --private-key <
 - **Frontend**: SvelteKit, Tailwind CSS, Vite
 - **Authentication**: OpenAuth
 - **Infrastructure**: Cloudflare Pages, Cloudflare Workers
-- **Development**: Bun, mprocs, Caddy
+- **Development**: Bun, mprocs
 
 ## 📊 Gas Costs
 
