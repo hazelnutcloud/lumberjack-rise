@@ -3,13 +3,27 @@
  * https://developers.cloudflare.com/workers/wrangler/configuration/
  */
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
+	"$schema": "../../node_modules/wrangler/config-schema.json",
 	"name": "auth-server",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-07-11",
 	"observability": {
-		"enabled": true
-	}
+		"enabled": true,
+	},
+	"kv_namespaces": [
+		{
+			"binding": "AUTH",
+			"id": "9c8f1c89f03a4e4486ab9ed7d35acdb2",
+		},
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "lumberjack-auth",
+			"database_id": "9c939c9b-8824-4b19-9011-fc46cc908445",
+			"migrations_dir": "migrations",
+		},
+	],
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

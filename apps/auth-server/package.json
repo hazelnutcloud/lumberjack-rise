@@ -11,8 +11,15 @@
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.8.19",
+		"drizzle-kit": "^0.31.4",
 		"typescript": "^5.5.2",
 		"vitest": "~3.2.0",
 		"wrangler": "^4.24.3"
+	},
+	"dependencies": {
+		"@openauthjs/openauth": "^0.4.3",
+		"arktype": "^2.1.20",
+		"drizzle-orm": "^0.44.2",
+		"viem": "^2.31.7"
 	}
 }
