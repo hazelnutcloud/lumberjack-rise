@@ -24,8 +24,6 @@ contract Lumberjack is IVRFConsumer {
     error NoRandomNumbers();
 
     // Game constants
-    uint256 private constant PLAYER_HEIGHT = 3;
-    uint256 private constant MIN_BRANCH_GAP = PLAYER_HEIGHT;
     uint256 private constant INITIAL_TIMER = 5 seconds;
     uint256 private constant TIME_PER_CHOP = 1 seconds;
     uint256 private constant LEADERBOARD_SIZE = 10;
@@ -214,36 +212,32 @@ contract Lumberjack is IVRFConsumer {
     function _generateBranchAt(uint256 seed, uint256 height) private pure returns (BranchSide) {
         uint256 random = uint256(keccak256(abi.encode(seed, height)));
 
-        // 40% left, 40% right, 20% none for variety
+        // 50% left, 50% right
         uint256 roll = random % 10;
-        if (roll < 4) return BranchSide.LEFT;
-        if (roll < 8) return BranchSide.RIGHT;
-        return BranchSide.NONE;
-    }
-
-    // Check if branch placement is valid
-    function _isValidBranchPlacement(uint256 seed, uint256 height, BranchSide side) private pure returns (bool) {
-        if (side == BranchSide.NONE) return true;
-
-        // Check previous branches on same side within PLAYER_HEIGHT distance
-        for (uint256 i = 1; i <= MIN_BRANCH_GAP; i++) {
-            if (height >= i) {
-                BranchSide prevBranch = _generateBranchAt(seed, height - i);
-                if (prevBranch == side) return false;
-            }
-        }
-        return true;
+        if (roll < 5) return BranchSide.LEFT;
+        return BranchSide.RIGHT;
     }
 
     // Get next valid branch
     function _getNextValidBranch(uint256 seed, uint256 startHeight) private pure returns (BranchSide) {
-        for (uint256 h = startHeight; h < startHeight + 20; h++) {
-            BranchSide branch = _generateBranchAt(seed, h);
-            if (_isValidBranchPlacement(seed, h, branch)) {
-                return branch;
-            }
+        if (startHeight == 1) {
+            return BranchSide.NONE;
         }
-        return BranchSide.NONE; // Fallback
+        
+        BranchSide branch = _generateBranchAt(seed, startHeight);
+        
+        uint256 maxConsecutive = 3;
+        
+        if (startHeight <= maxConsecutive) return branch;
+        
+        for (uint256 i = 1; i <= maxConsecutive; i++) {
+           BranchSide prevBranch = _generateBranchAt(seed, startHeight - i); 
+           if (prevBranch != branch) {
+               return branch;
+           }
+        }
+        
+        return BranchSide.NONE;
     }
 
 

@@ -1,14 +1,14 @@
 {
-  "lib/forge-std": {
-    "tag": {
-      "name": "v1.9.7",
-      "rev": "77041d2ce690e692d6e03cc812b57d1ddaa4d505"
-    }
-  },
   "lib/chainlink": {
     "tag": {
       "name": "v2.25.0",
       "rev": "381285eba617615326ef28447fbfd8457ae3d14c"
+    }
+  },
+  "lib/forge-std": {
+    "tag": {
+      "name": "v1.9.7",
+      "rev": "77041d2ce690e692d6e03cc812b57d1ddaa4d505"
     }
   }
 }
