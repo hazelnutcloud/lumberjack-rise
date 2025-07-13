@@ -20,3 +20,5 @@ export default {
 		return await app.fetch(request, env, ctx);
 	},
 } satisfies ExportedHandler<Env>;
+
+export { Relay } from './relay';
