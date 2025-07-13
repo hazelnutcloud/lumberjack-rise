@@ -18,4 +18,5 @@ export type GameContext = {
 	eventBus: EventBus;
 	remove: (obj: GameObject) => void;
 	textureLoader: ReturnType<typeof useLoader<typeof TextureLoader>>;
+	store: Map<string, any>;
 };

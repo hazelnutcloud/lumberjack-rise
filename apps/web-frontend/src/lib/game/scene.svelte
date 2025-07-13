@@ -1,13 +1,17 @@
 <script lang="ts">
-	import { T, useLoader } from '@threlte/core';
+	import { T, useLoader, useTask } from '@threlte/core';
 	import { Game } from './game.svelte';
-	import { Text } from '@threlte/extras';
-	import { GameObject } from './object.svelte';
+	import { HTML, Text } from '@threlte/extras';
+	import { GameObject, HTMLObject, SpriteObject } from './object.svelte';
 	import { TextureLoader } from 'three';
 
 	const loader = useLoader(TextureLoader);
 
 	const game = new Game(loader);
+
+	useTask((delta) => {
+		game.update(delta);
+	});
 </script>
 
 <svelte:window
@@ -19,12 +23,16 @@
 
 {#snippet renderObj(obj: GameObject)}
 	<T.Group position={obj.position} scale={obj.scale}>
-		{#if obj.texture}
+		{#if obj instanceof SpriteObject}
 			{#await obj.texture then texture}
 				<T.Sprite>
 					<T.SpriteMaterial map={texture}></T.SpriteMaterial>
 				</T.Sprite>
 			{/await}
+		{:else if obj instanceof HTMLObject}
+			<HTML>
+				<svelte:component this={obj.component} {...obj.args}></svelte:component>
+			</HTML>
 		{/if}
 		{#each obj.children as child, i (i)}
 			{@render renderObj(child)}

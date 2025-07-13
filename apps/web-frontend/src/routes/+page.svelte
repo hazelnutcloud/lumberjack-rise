@@ -23,7 +23,7 @@
 			</form>
 		{/if}
 	</div>
-	<div class="flex-1">
+	<div class="relative flex-1">
 		<Canvas>
 			<Scene />
 		</Canvas>

@@ -1,9 +1,10 @@
-import { GameObject } from './object.svelte';
+import { GameObject, SpriteObject } from './object.svelte';
 import type { GameContext } from './types';
 import { randomBigInt256 } from './utils/rng';
 import { encodeAbiParameters, hexToBigInt, keccak256 } from 'viem';
 import type { AsyncWritable } from '@threlte/core';
 import type { Texture } from 'three';
+import type { Lumberjack } from './player.svelte';
 
 type BranchPosition = 'left' | 'right' | 'none';
 
@@ -11,20 +12,21 @@ export class Tree extends GameObject {
 	BUFFER_HEIGHT = 10;
 	randomNumber = randomBigInt256();
 
-	constructor(ctx: GameContext) {
+	constructor(ctx: GameContext, player: Lumberjack) {
 		super(ctx);
 
 		const trunks = Array.from({ length: this.BUFFER_HEIGHT }, (_, i) => new Trunk(this.ctx, i));
 		const branchContainer = new BranchContainer(ctx, {
 			bufferHeight: this.BUFFER_HEIGHT,
-			randomNumber: this.randomNumber
+			randomNumber: this.randomNumber,
+			player
 		});
 
 		this.children = [...trunks, branchContainer];
 	}
 }
 
-export class Trunk extends GameObject {
+export class Trunk extends SpriteObject {
 	texture = this.ctx.textureLoader.load('/sprites/tree-trunk.png');
 
 	constructor(ctx: GameContext, height: number) {
@@ -40,7 +42,10 @@ export class BranchContainer extends GameObject {
 	branches: (Branch | null)[] = [];
 	abortController: AbortController;
 
-	constructor(ctx: GameContext, params: { randomNumber: bigint; bufferHeight: number }) {
+	constructor(
+		ctx: GameContext,
+		params: { randomNumber: bigint; bufferHeight: number; player: Lumberjack }
+	) {
 		super(ctx);
 
 		this.bufferHeight = params.bufferHeight;
@@ -63,15 +68,16 @@ export class BranchContainer extends GameObject {
 		this.children = this.branches.filter((b) => b !== null);
 
 		this.abortController = new AbortController();
-		this.ctx.eventBus.on('MoveRight', () => this.handlePlayerMove(), {
+		this.ctx.eventBus.on('MoveRight', () => this.handlePlayerMove('right'), {
 			signal: this.abortController.signal
 		});
-		this.ctx.eventBus.on('MoveLeft', () => this.handlePlayerMove(), {
+		this.ctx.eventBus.on('MoveLeft', () => this.handlePlayerMove('left'), {
 			signal: this.abortController.signal
 		});
 	}
 
-	handlePlayerMove() {
+	handlePlayerMove(direction: 'left' | 'right') {
+		if (this.ctx.store.get('GameOver')) return;
 		const nextPosition = this.getBranchPosition(this.currentHeight);
 		const removedBranch = this.branches.shift();
 		this.branches.push(
@@ -80,7 +86,14 @@ export class BranchContainer extends GameObject {
 				: new Branch(this.ctx, { height: this.currentHeight, position: nextPosition })
 		);
 		this.currentHeight += 1;
-		if (removedBranch) removedBranch.destroy();
+		const nextBranch = this.branches[0];
+		if (nextBranch) {
+			if (nextBranch.branchPosition === direction) {
+				this.ctx.eventBus.emit('GameOver');
+				this.ctx.store.set('GameOver', true);
+			}
+			nextBranch.destroy();
+		}
 		this.children = this.branches.filter((b) => b !== null);
 		this.position[1] -= 0.6;
 	}
@@ -126,9 +139,10 @@ export class BranchContainer extends GameObject {
 	}
 }
 
-export class Branch extends GameObject {
-	texture: AsyncWritable<Texture> | undefined;
+export class Branch extends SpriteObject {
+	texture: AsyncWritable<Texture>;
 	position: [number, number, number];
+	branchPosition: BranchPosition;
 
 	constructor(ctx: GameContext, params: { height: number; position: BranchPosition }) {
 		super(ctx);
@@ -142,5 +156,6 @@ export class Branch extends GameObject {
 			position === 'right'
 				? ctx.textureLoader.load('/sprites/tree-branch-right.png')
 				: ctx.textureLoader.load('/sprites/tree-branch.png');
+		this.branchPosition = params.position;
 	}
 }
