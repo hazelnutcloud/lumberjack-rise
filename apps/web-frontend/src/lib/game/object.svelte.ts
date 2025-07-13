@@ -1,11 +1,11 @@
 import type { AsyncWritable } from '@threlte/core';
 import type { Texture } from 'three';
-import type { GameContext } from './types';
+import type { GameContext, Vector3 } from './types';
 import type { Component } from 'svelte';
 
 export abstract class GameObject {
-	position: [number, number, number] = $state([0, 0, 0]);
-	scale: [number, number, number] = $state([1, 1, 1]);
+	position: Vector3 = $state([0, 0, 0]);
+	scale: Vector3 = $state([1, 1, 1]);
 	children: GameObject[] = $state([]);
 	ctx: GameContext;
 

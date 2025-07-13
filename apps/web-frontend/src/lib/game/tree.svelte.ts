@@ -1,10 +1,12 @@
 import { GameObject, SpriteObject } from './object.svelte';
-import type { GameContext } from './types';
+import type { GameContext, Vector3 } from './types';
 import { randomBigInt256 } from './utils/rng';
 import { encodeAbiParameters, hexToBigInt, keccak256 } from 'viem';
 import type { AsyncWritable } from '@threlte/core';
 import type { Texture } from 'three';
 import type { Lumberjack } from './player.svelte';
+import { Tween } from 'svelte/motion';
+import { cubicIn, cubicOut } from 'svelte/easing';
 
 type BranchPosition = 'left' | 'right' | 'none';
 
@@ -41,6 +43,11 @@ export class BranchContainer extends GameObject {
 	randomNumber: bigint;
 	branches: (Branch | null)[] = [];
 	abortController: AbortController;
+	position = $state<[number, Tween<number>, number]>([
+		0,
+		new Tween(0, { easing: cubicIn, duration: 100 }),
+		0
+	]);
 
 	constructor(
 		ctx: GameContext,
@@ -80,6 +87,7 @@ export class BranchContainer extends GameObject {
 		if (this.ctx.store.get('GameOver')) return;
 		const nextPosition = this.getBranchPosition(this.currentHeight);
 		const removedBranch = this.branches.shift();
+		removedBranch?.destroy();
 		this.branches.push(
 			nextPosition === 'none'
 				? null
@@ -92,10 +100,9 @@ export class BranchContainer extends GameObject {
 				this.ctx.eventBus.emit('GameOver');
 				this.ctx.store.set('GameOver', true);
 			}
-			nextBranch.destroy();
 		}
 		this.children = this.branches.filter((b) => b !== null);
-		this.position[1] -= 0.6;
+		this.position[1].set(this.position[1].target - 0.6);
 	}
 
 	getBranchPosition(height: number) {

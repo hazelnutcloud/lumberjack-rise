@@ -4,6 +4,7 @@
 	import { HTML, Text } from '@threlte/extras';
 	import { GameObject, HTMLObject, SpriteObject } from './object.svelte';
 	import { TextureLoader } from 'three';
+	import { numberizeVector3 } from './utils/vector3';
 
 	const loader = useLoader(TextureLoader);
 
@@ -22,7 +23,7 @@
 <T.PerspectiveCamera makeDefault position.z={7} fov={50} />
 
 {#snippet renderObj(obj: GameObject)}
-	<T.Group position={obj.position} scale={obj.scale}>
+	<T.Group position={numberizeVector3(obj.position)} scale={numberizeVector3(obj.scale)}>
 		{#if obj instanceof SpriteObject}
 			{#await obj.texture then texture}
 				<T.Sprite>
