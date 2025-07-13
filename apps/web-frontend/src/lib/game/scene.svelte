@@ -5,6 +5,9 @@
 	import { GameObject, HTMLObject, SpriteObject } from './object.svelte';
 	import { TextureLoader } from 'three';
 	import { numberizeVector3 } from './utils/vector3';
+	import { WebSocket } from 'partysocket';
+
+	const { relayUrl }: { relayUrl: string | undefined } = $props();
 
 	const loader = useLoader(TextureLoader);
 
@@ -12,6 +15,24 @@
 
 	useTask((delta) => {
 		game.update(delta);
+	});
+
+	$effect(() => {
+		if (!relayUrl) return;
+
+		const ws = new WebSocket(relayUrl);
+
+		ws.onopen = () => {
+			console.log('connected to ws');
+		};
+
+		ws.onerror = (err) => {
+			console.error(err.message);
+		};
+
+		return () => {
+			ws.close();
+		};
 	});
 </script>
 

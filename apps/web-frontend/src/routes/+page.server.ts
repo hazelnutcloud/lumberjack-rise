@@ -2,6 +2,14 @@ import { getAuthClient } from '$lib/auth';
 import { redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 
+export function load({ cookies }) {
+	const accessToken = cookies.get('access_token');
+
+	return {
+		accessToken: accessToken // T.T
+	};
+}
+
 export const actions = {
 	async login(event) {
 		if (event.locals.user) {

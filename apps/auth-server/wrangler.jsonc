@@ -39,6 +39,9 @@
 			"new_classes": ["Relay"],
 		},
 	],
+	"vars": {
+		"ISSUER_URL": "https://something.worker.dev",
+	},
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

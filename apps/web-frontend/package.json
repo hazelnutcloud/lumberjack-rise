@@ -42,6 +42,7 @@
 		"@types/three": "^0.178.1",
 		"auth-server": "workspace:*",
 		"emittery": "^1.2.0",
+		"partysocket": "^1.1.4",
 		"three": "^0.178.0",
 		"viem": "^2.31.7"
 	}

@@ -1,8 +1,17 @@
 <script lang="ts">
 	import Scene from '$lib/game/scene.svelte';
 	import { Canvas } from '@threlte/core';
+	import { env } from '$env/dynamic/public';
 
 	const { data } = $props();
+
+	const url = new URL(env.PUBLIC_ISSUER_URL);
+	const protocol = url.protocol === 'http:' ? 'ws:' : 'wss:';
+	const relayUrl = $derived(
+		data.accessToken && data.user?.address
+			? `${protocol}//${url.host}/ws/relay/${data.user.address}?accessToken=${data.accessToken}`
+			: undefined
+	);
 </script>
 
 <div
@@ -25,7 +34,7 @@
 	</div>
 	<div class="relative flex-1">
 		<Canvas>
-			<Scene />
+			<Scene {relayUrl} />
 		</Canvas>
 	</div>
 </div>
