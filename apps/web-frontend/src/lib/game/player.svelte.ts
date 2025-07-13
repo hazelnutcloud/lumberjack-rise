@@ -1,12 +1,12 @@
-import { useTexture } from '@threlte/extras';
 import { GameObject } from './object.svelte';
 import type { GameContext } from './types';
 
 export class Lumberjack extends GameObject {
-	position = $state<[number, number, number]>([-0.7, -2.1, 0]);
+	position = $state<[number, number, number]>([-0.7, -2.1, -0.2]);
 	scale = $state<[number, number, number]>([0.8, 0.8, 0.8]);
-	texture = useTexture('/sprites/lumberjack.png');
+	texture = this.ctx.textureLoader.load('/sprites/lumberjack.png');
 	abortController = new AbortController();
+	side: 'left' | 'right' = 'left';
 
 	constructor(ctx: GameContext) {
 		super(ctx);
@@ -22,6 +22,7 @@ export class Lumberjack extends GameObject {
 					}
 					return texture;
 				});
+				this.side = 'left';
 			},
 			{ signal: this.abortController.signal }
 		);
@@ -37,6 +38,7 @@ export class Lumberjack extends GameObject {
 					}
 					return texture;
 				});
+				this.side = 'right';
 			},
 			{ signal: this.abortController.signal }
 		);
