@@ -13,6 +13,10 @@
 		"./subjects": {
 			"import": "./src/subjects.ts",
 			"types": "./src/subjects.ts"
+		},
+		"./relay": {
+			"import": "./src/relay.ts",
+			"types": "./src/relay.ts"
 		}
 	},
 	"devDependencies": {

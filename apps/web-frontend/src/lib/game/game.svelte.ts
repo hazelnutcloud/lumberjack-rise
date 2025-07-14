@@ -6,17 +6,21 @@ import type { EventBus, GameContext, InputMap } from './types';
 import type { useLoader } from '@threlte/core';
 import type { TextureLoader } from 'three';
 import { Timer } from './timer-obj.svelte';
+import type { WebSocket } from 'partysocket';
+import { OnchainSync } from './onchain-sync.svelte';
 
 export const inputMap = {
 	'keydown:ArrowRight': 'MoveRight',
 	'keydown:ArrowLeft': 'MoveLeft',
-	'keydown:Enter': 'StartGame'
+	'keydown:Enter': 'RawStartGame'
 } as const satisfies InputMap;
 
 export class Game {
 	scene: GameObject[];
 	eventBus: EventBus;
 	inputMap: InputMap;
+	onchainSync: OnchainSync;
+	ws?: WebSocket;
 
 	constructor(textureLoader: ReturnType<typeof useLoader<typeof TextureLoader>>) {
 		this.eventBus = new Emittery();
@@ -29,6 +33,7 @@ export class Game {
 		const player = new Lumberjack(ctx);
 		this.scene = $state([player, new Tree(ctx, player), new Timer(ctx, 5000)]);
 		this.inputMap = inputMap;
+		this.onchainSync = new OnchainSync(ctx);
 	}
 
 	update(delta: number) {
@@ -65,5 +70,10 @@ export class Game {
 		if (idx === -1) return;
 		this.scene.splice(idx, 1);
 		obj.destroy();
+	}
+
+	setWs(ws: WebSocket | undefined) {
+		this.ws = ws;
+		this.onchainSync.setWs(ws);
 	}
 }

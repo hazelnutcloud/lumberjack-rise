@@ -66,9 +66,9 @@ contract Lumberjack is IVRFConsumer {
 
     // Events
     event GameStartRequested(address indexed player, uint256 requestId);
-    event GameStarted(address indexed player, uint256 gameId, uint8 firstBranch);
+    event GameStarted(address indexed player, uint256 gameId, uint256 randomSeed);
     event MoveMade(address indexed player, Move move, uint256 score, uint8 nextBranch, uint256 timerEnd);
-    event GameEnded(address indexed player, uint256 finalScore, bool victory);
+    event GameEnded(address indexed player, uint256 finalScore);
 
     constructor(address _vrfCoordinator) {
         coordinator = IVRFCoordinator(_vrfCoordinator);
@@ -81,7 +81,13 @@ contract Lumberjack is IVRFConsumer {
     // Start a new game
     function startGame() external {
         GameState storage game = games[msg.sender];
-        if (game.isActive) revert GameAlreadyActive();
+        if (game.isActive) {
+            if (block.timestamp > game.timerEnd) {
+                _endGame(msg.sender);
+            } else {
+                revert GameAlreadyActive();
+            }
+        }
 
         // Request random seed from Fast VRF
         // Use blockhash as client seed for additional entropy
@@ -122,7 +128,7 @@ contract Lumberjack is IVRFConsumer {
         // Calculate first branch
         game.nextBranchSide = uint8(_getNextValidBranch(randomSeed, 1));
 
-        emit GameStarted(player, game.gameId, game.nextBranchSide);
+        emit GameStarted(player, game.gameId, randomSeed);
     }
 
     // Make a move (chop the tree)
@@ -131,7 +137,7 @@ contract Lumberjack is IVRFConsumer {
         if (!game.isActive) revert NoActiveGame();
         if (block.timestamp > game.timerEnd) {
             _endGame(msg.sender);
-            revert TimerExpired();
+            return;
         }
 
         // Check collision with current branch
@@ -141,7 +147,6 @@ contract Lumberjack is IVRFConsumer {
         ) {
             // Game over - collision
             _endGame(msg.sender);
-            emit GameEnded(msg.sender, game.currentHeight, false);
             return;
         }
 
@@ -161,19 +166,10 @@ contract Lumberjack is IVRFConsumer {
         emit MoveMade(msg.sender, move, game.currentHeight, game.nextBranchSide, game.timerEnd);
     }
 
-    // Check and handle timeout
-    function checkTimeout(address player) external {
-        GameState storage game = games[player];
-        if (!game.isActive) revert NoActiveGame();
-        if (block.timestamp <= game.timerEnd) return;
-
-        _endGame(player);
-        emit GameEnded(player, game.currentHeight, false);
-    }
-
     // End game and update scores
     function _endGame(address player) private {
         GameState storage game = games[player];
+        if (!game.isActive) return;
         uint256 score = game.currentHeight;
         game.isActive = false;
 
@@ -182,6 +178,7 @@ contract Lumberjack is IVRFConsumer {
             highScores[player] = score;
             _updateLeaderboard(player, score);
         }
+        emit GameEnded(player, game.currentHeight);
     }
 
     // Update leaderboard
@@ -223,24 +220,22 @@ contract Lumberjack is IVRFConsumer {
         if (startHeight == 1) {
             return BranchSide.NONE;
         }
-        
+
         BranchSide branch = _generateBranchAt(seed, startHeight);
-        
+
         uint256 maxConsecutive = 3;
-        
+
         if (startHeight <= maxConsecutive) return branch;
-        
+
         for (uint256 i = 1; i <= maxConsecutive; i++) {
-           BranchSide prevBranch = _generateBranchAt(seed, startHeight - i); 
-           if (prevBranch != branch) {
-               return branch;
-           }
+            BranchSide prevBranch = _generateBranchAt(seed, startHeight - i);
+            if (prevBranch != branch) {
+                return branch;
+            }
         }
-        
+
         return BranchSide.NONE;
     }
-
-
 
     // View functions
     function getGameState(address player)

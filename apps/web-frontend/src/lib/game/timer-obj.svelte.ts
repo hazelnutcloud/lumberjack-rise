@@ -4,7 +4,7 @@ import TimerComponent from './timer.svelte';
 import type { GameContext } from './types';
 
 export class Timer extends HTMLObject {
-	position: [number, number, number] = [-0.4, -2.4, 1];
+	position: [number, number, number] = [-5.4, -2.4, 1];
 	component = TimerComponent;
 	args: ComponentProps<typeof TimerComponent>;
 	abortController = new AbortController();
@@ -12,7 +12,7 @@ export class Timer extends HTMLObject {
 
 	constructor(ctx: GameContext, timeLeft: number) {
 		super(ctx);
-		this.args = $state({ timeLeft, gameOver: false });
+		this.args = $state({ timeLeft, gameState: 'waiting' });
 		this.initialTime = timeLeft;
 
 		ctx.eventBus.on('MoveRight', () => this.handlePlayerMove(), {
@@ -24,7 +24,27 @@ export class Timer extends HTMLObject {
 		ctx.eventBus.on(
 			'GameOver',
 			() => {
-				this.args.gameOver = true;
+				ctx.store.set('GameState', 'GAME_OVER');
+				this.args.gameState = 'over';
+			},
+			{
+				signal: this.abortController.signal
+			}
+		);
+		ctx.eventBus.on(
+			'StartGame',
+			() => {
+				ctx.store.set('GameState', 'GAME_STARTED');
+				this.args.gameState = 'started';
+			},
+			{
+				signal: this.abortController.signal
+			}
+		);
+		ctx.eventBus.on(
+			'GameLoading',
+			() => {
+				this.args.gameState = 'loading';
 			},
 			{
 				signal: this.abortController.signal
@@ -33,19 +53,18 @@ export class Timer extends HTMLObject {
 	}
 
 	update(delta: number): void {
-		if (this.ctx.store.get('GameOver')) return;
+		const gameState = this.ctx.store.get('GameState');
+		if (!gameState || gameState === 'GAME_OVER') return;
 		if (this.args.timeLeft - delta * 1000 < 0) {
 			this.args.timeLeft = 0;
-			this.ctx.eventBus.emit('GameOver');
-			this.ctx.store.set('GameOver', true);
 		} else {
 			this.args.timeLeft -= delta * 1000;
 		}
 	}
 
 	handlePlayerMove() {
-		if (this.ctx.store.get('GameOver')) return;
-		if (this.args.timeLeft === 0) return;
+		const gameState = this.ctx.store.get('GameState');
+		if (!gameState || gameState === 'GAME_OVER') return;
 		this.args.timeLeft = Math.min(this.initialTime, this.args.timeLeft + 200);
 	}
 }

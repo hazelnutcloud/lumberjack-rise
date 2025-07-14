@@ -18,20 +18,21 @@
 	});
 
 	$effect(() => {
-		if (!relayUrl) return;
+		if (!relayUrl) {
+			game.setWs(undefined);
+			return;
+		}
 
 		const ws = new WebSocket(relayUrl);
-
-		ws.onopen = () => {
-			console.log('connected to ws');
-		};
 
 		ws.onerror = (err) => {
 			console.error(err.message);
 		};
 
+		game.setWs(ws);
+
 		return () => {
-			ws.close();
+			ws?.close();
 		};
 	});
 </script>
@@ -52,8 +53,9 @@
 				</T.Sprite>
 			{/await}
 		{:else if obj instanceof HTMLObject}
+			{@const Component = obj.component}
 			<HTML>
-				<svelte:component this={obj.component} {...obj.args}></svelte:component>
+				<Component {...obj.args} />
 			</HTML>
 		{/if}
 		{#each obj.children as child, i (i)}

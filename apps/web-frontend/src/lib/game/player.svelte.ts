@@ -21,7 +21,8 @@ export class Lumberjack extends SpriteObject {
 	}
 
 	handlePlayerMove(direction: 'left' | 'right') {
-		if (this.ctx.store.get('GameOver')) return;
+		const gameState = this.ctx.store.get('GameState');
+		if (!gameState || gameState === 'GAME_OVER') return;
 		this.position[0] = direction === 'left' ? -0.7 : 0.7;
 		this.texture.update((texture) => {
 			if (texture) {

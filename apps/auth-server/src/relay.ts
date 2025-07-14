@@ -72,6 +72,7 @@ export class Relay extends Server<Env> {
 			return new TextDecoder().decode(message);
 		})();
 
+		console.log(msg);
 		const body = RelaySchema.ClientSchema(JSON.parse(msg));
 
 		if (body instanceof type.errors) {
@@ -84,7 +85,7 @@ export class Relay extends Server<Env> {
 			return;
 		}
 
-		const handleWithRetry = () => pRetry(() => this.handleTxRequest(body), { retries: 3 });
+		const handleWithRetry = () => pRetry(() => this.handleTxRequest(body), { retries: 2 });
 
 		try {
 			const res = await this.requestQueue.add(handleWithRetry);

@@ -57,7 +57,25 @@ export class BranchContainer extends GameObject {
 
 		this.bufferHeight = params.bufferHeight;
 		this.randomNumber = params.randomNumber;
+		this.initializeBranches();
 
+		this.abortController = new AbortController();
+		this.ctx.eventBus.on('MoveRight', () => this.handlePlayerMove('right'), {
+			signal: this.abortController.signal
+		});
+		this.ctx.eventBus.on('MoveLeft', () => this.handlePlayerMove('left'), {
+			signal: this.abortController.signal
+		});
+		this.ctx.eventBus.on('StartGame', (randomSeed: bigint) => {
+			this.randomNumber = randomSeed;
+			this.initializeBranches();
+		});
+	}
+
+	initializeBranches() {
+		this.currentHeight = 1;
+		this.position[1].set(0, { duration: 0 });
+		this.branches = [];
 		for (this.currentHeight; this.currentHeight <= this.bufferHeight; this.currentHeight++) {
 			const position = this.getBranchPosition(this.currentHeight);
 			if (position === 'none') {
@@ -71,20 +89,12 @@ export class BranchContainer extends GameObject {
 				);
 			}
 		}
-
 		this.children = this.branches.filter((b) => b !== null);
-
-		this.abortController = new AbortController();
-		this.ctx.eventBus.on('MoveRight', () => this.handlePlayerMove('right'), {
-			signal: this.abortController.signal
-		});
-		this.ctx.eventBus.on('MoveLeft', () => this.handlePlayerMove('left'), {
-			signal: this.abortController.signal
-		});
 	}
 
 	handlePlayerMove(direction: 'left' | 'right') {
-		if (this.ctx.store.get('GameOver')) return;
+		const gameState = this.ctx.store.get('GameState');
+		if (!gameState || gameState === 'GAME_OVER') return;
 		const nextPosition = this.getBranchPosition(this.currentHeight);
 		const removedBranch = this.branches.shift();
 		removedBranch?.destroy();
@@ -98,7 +108,6 @@ export class BranchContainer extends GameObject {
 		if (nextBranch) {
 			if (nextBranch.branchPosition === direction) {
 				this.ctx.eventBus.emit('GameOver');
-				this.ctx.store.set('GameOver', true);
 			}
 		}
 		this.children = this.branches.filter((b) => b !== null);
