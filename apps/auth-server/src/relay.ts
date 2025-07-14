@@ -94,7 +94,7 @@ export class Relay extends Server<Env> {
 
 			connection.send(Json.stringify({ type: 'txSuccess', receipt: res, id: body.id } satisfies ServerSchema));
 		} catch (err) {
-			console.error(err);
+			console.error('revert data: ', (err as any).data);
 			if (err instanceof Error) {
 				connection.send(JSON.stringify({ type: 'error', message: err.message } satisfies ServerSchema));
 			} else {

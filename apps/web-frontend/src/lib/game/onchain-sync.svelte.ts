@@ -63,6 +63,7 @@ export class OnchainSync {
 			address: LUMBERJACK_CONTRACT[11155931].address,
 			eventName: 'GameEnded',
 			onLogs: (logs) => {
+				console.log(logs);
 				for (const log of logs) {
 					if (log.args.player === undefined) continue;
 					this.ctx.eventBus.emit('GameOver');

@@ -134,7 +134,6 @@ contract Lumberjack is IVRFConsumer {
     // Make a move (chop the tree)
     function makeMove(Move move) external {
         GameState storage game = games[msg.sender];
-        if (!game.isActive) revert NoActiveGame();
         if (block.timestamp > game.timerEnd) {
             _endGame(msg.sender);
             return;

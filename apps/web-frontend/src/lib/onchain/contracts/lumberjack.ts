@@ -166,6 +166,6 @@ export const LUMBERJACK_CONTRACT = {
 		{ type: 'error', name: 'TimerExpired', inputs: [] }
 	],
 	[riseTestnet.id]: {
-		address: '0x20294dF08db5A390F6571cAbAab8C1671502c5dD'
+		address: '0x2317359a678736aafae4c7387ac2c3a5089e7b6e'
 	}
 } as const;
